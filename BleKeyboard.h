@@ -148,6 +148,7 @@ private:
   String        deviceManufacturer;
   uint8_t            batteryLevel;
   bool               connected = false;
+  bool               authenticated = false;
   uint32_t           _delay_ms = 7;
   void delay_ms(uint64_t ms);
 
@@ -170,6 +171,10 @@ public:
   size_t write(const uint8_t *buffer, size_t size);
   void releaseAll(void);
   bool isConnected(void);
+  bool isAuthenticated(void);
+#ifndef USE_NIMBLE
+  void setAuthenticated(bool isAuthenticated);
+#endif // USE_NIMBLE
   void setBatteryLevel(uint8_t level);
   void setName(String deviceName);  
   void setDelay(uint32_t ms);
@@ -182,7 +187,6 @@ protected:
   virtual void onConnect(BLEServer* pServer) BLE_OVERRIDE;
   virtual void onDisconnect(BLEServer* pServer) BLE_OVERRIDE;
   virtual void onWrite(BLECharacteristic* me) BLE_OVERRIDE;
-
 #if defined(USE_NIMBLE)
   virtual void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
     this->onConnect((BLEServer*)pServer);
@@ -193,6 +197,7 @@ protected:
   virtual void onWrite(NimBLECharacteristic* me, NimBLEConnInfo& connInfo) override {
     this->onWrite((BLECharacteristic*)me);
   }
+  virtual void onAuthenticationComplete(NimBLEConnInfo& connInfo) override;
 #endif // USE_NIMBLE
 };
 

@@ -101,11 +101,30 @@ BleKeyboard::BleKeyboard(const char* deviceName, const char* deviceManufacturer,
     , deviceManufacturer(String(deviceManufacturer).substring(0,15))
     , batteryLevel(batteryLevel) {}
 
+#ifndef USE_NIMBLE
+// Unfortunately, the event handler has to be a standalone function,
+// so we need this static pointer to bridge into the BleKeyboard object.
+static BleKeyboard *pme;
+static void bluedroid_gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
+  if (event == ESP_GAP_BLE_AUTH_CMPL_EVT) {
+    bool success = param->ble_security.auth_cmpl.success;
+    pme->setAuthenticated(success);
+    if (!success) {
+      ESP_LOGE(LOG_TAG, "BLE GAP authentication failed, reason: %d", param->ble_security.auth_cmpl.fail_reason);
+    }
+  }
+}
+#endif
+
 void BleKeyboard::begin(void)
 {
   BLEDevice::init(deviceName.c_str());
   BLEServer* pServer = BLEDevice::createServer();
   pServer->setCallbacks(this);
+#ifndef USE_NIMBLE
+  pme = this;
+  BLEDevice::setCustomGapHandler(bluedroid_gap_event_handler);
+#endif
 
   hid = new BLEHIDDevice(pServer);
 #if defined(USE_NIMBLE)
@@ -174,6 +193,16 @@ void BleKeyboard::end(void)
 bool BleKeyboard::isConnected(void) {
   return this->connected;
 }
+
+bool BleKeyboard::isAuthenticated(void) {
+  return this->authenticated;
+}
+
+#ifndef USE_NIMBLE
+void BleKeyboard::setAuthenticated(bool isAuthenticated) {
+  this->authenticated = isAuthenticated;
+}
+#endif
 
 void BleKeyboard::setBatteryLevel(uint8_t level) {
   this->batteryLevel = level;
@@ -555,6 +584,12 @@ void BleKeyboard::onWrite(BLECharacteristic* me) {
   (void)value;
   ESP_LOGI(LOG_TAG, "special keys: %d", *value);
 }
+
+#ifdef USE_NIMBLE
+void BleKeyboard::onAuthenticationComplete(NimBLEConnInfo& connInfo) {
+  this->authenticated = true;
+}
+#endif // USE_NIMBLE
 
 void BleKeyboard::delay_ms(uint64_t ms) {
   uint64_t m = esp_timer_get_time();

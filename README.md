@@ -5,6 +5,10 @@ You might also be interested in:
 - [ESP32-BLE-Mouse](https://github.com/T-vK/ESP32-BLE-Mouse)
 - [ESP32-BLE-Gamepad](https://github.com/lemmingDev/ESP32-BLE-Gamepad)
 
+## Changes from the @T-vK original
+
+- Incorporate @tiagosr compilation/clean-up changes.
+- Add isAuthenticated() method for both NimBLE and Bluedroid (necessary sometimes compared to isConnected() to avoid lost keystrokes)
 
 ## Features
 
