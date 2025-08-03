@@ -586,7 +586,15 @@ void BleKeyboard::onWrite(BLECharacteristic* me) {
 }
 
 #ifdef USE_NIMBLE
+// based on https://github.com/h2zero/NimBLE-Arduino/blob/master/examples/NimBLE_Server/NimBLE_Server.ino
 void BleKeyboard::onAuthenticationComplete(NimBLEConnInfo& connInfo) {
+  /** Check that encryption was successful, if not we disconnect the client */
+  if (!connInfo.isEncrypted()) {
+    NimBLEDevice::getServer()->disconnect(connInfo.getConnHandle());
+    ESP_LOGE(LOG_TAG, "Encrypt connection failed - disconnecting client\n");
+    return;
+  }
+  ESP_LOGI(LOG_TAG, "Secured connection to: %s\n", connInfo.getAddress().toString().c_str());
   this->authenticated = true;
 }
 #endif // USE_NIMBLE
