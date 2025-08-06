@@ -566,6 +566,7 @@ void BleKeyboard::onConnect(BLEServer* pServer) {
 
 void BleKeyboard::onDisconnect(BLEServer* pServer) {
   this->connected = false;
+  this->authenticated = false;
 
 #if !defined(USE_NIMBLE)
 
